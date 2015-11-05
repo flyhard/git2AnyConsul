@@ -2,16 +2,24 @@
 	"version": 0,
 	"dependencies": [
 		{
-			"importpath": "github.com/gorilla/context",
-			"repository": "https://github.com/gorilla/context",
-			"revision": "1c83b3eabd45b6d76072b66b746c20815fb2872d",
+			"importpath": "github.com/hashicorp/consul/api",
+			"repository": "https://github.com/hashicorp/consul",
+			"revision": "cf1b9fe0741e373125e23c10af233a7f67427a68",
+			"branch": "master",
+			"path": "/api"
+		},
+		{
+			"importpath": "github.com/hashicorp/go-cleanhttp",
+			"repository": "https://github.com/hashicorp/go-cleanhttp",
+			"revision": "5df5ddc69534f1a4697289f1dca2193fbb40213f",
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/gorilla/mux",
-			"repository": "https://github.com/gorilla/mux",
-			"revision": "ad4d7a5882b961e07e2626045eb995c022ac6664",
-			"branch": "master"
+			"importpath": "github.com/hashicorp/serf/coordinate",
+			"repository": "https://github.com/hashicorp/serf",
+			"revision": "e53c5ef9c9b74fdb39baf2906a0fb9d7635bde46",
+			"branch": "master",
+			"path": "/coordinate"
 		}
 	]
 }

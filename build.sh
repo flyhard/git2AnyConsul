@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 if [[ -z $GOPATH ]]
 then
@@ -12,4 +13,4 @@ then
     sudo cp $GOPATH/bin/gb* /usr/local/bin
 fi
 
-gb build all
+gb build github.com/flyhard/gitProperties2Consul
