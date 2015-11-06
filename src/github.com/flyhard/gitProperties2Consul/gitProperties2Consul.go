@@ -1,14 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"log"
+	"fmt"
 	"github.com/hashicorp/consul/api"
-	"os"
 	"io"
 	"io/ioutil"
+	"log"
+	"os"
+	"strings"
 )
+
 var (
 	Trace   *log.Logger
 	Info    *log.Logger
@@ -17,10 +19,10 @@ var (
 )
 
 func Init(
-traceHandle io.Writer,
-infoHandle io.Writer,
-warningHandle io.Writer,
-errorHandle io.Writer) {
+	traceHandle io.Writer,
+	infoHandle io.Writer,
+	warningHandle io.Writer,
+	errorHandle io.Writer) {
 
 	Trace = log.New(traceHandle,
 		"TRACE: ",
@@ -39,19 +41,43 @@ errorHandle io.Writer) {
 		log.Ldate|log.Ltime|log.Lshortfile)
 }
 
+func processDir(dirname string) {
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		Error.Fatal("File reading failed:", err)
+	}
+	for _, element := range files {
+		name := dirname + "/" + element.Name()
+		if strings.HasPrefix(element.Name(), ".") {
+			continue
+		}
+		if element.IsDir() {
+			Info.Print(name + "/")
+			processDir(name)
+		} else {
+			Info.Print(name)
+		}
+	}
+}
+
 func main() {
 	Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
 	var host string
-	flag.StringVar(&host,"host","127.0.0.1", "Address of consul server")
+	flag.StringVar(&host, "host", "127.0.0.1", "Address of consul server")
+
 	var port int
-	flag.IntVar(&port,"port", 8500, "consul port")
+	flag.IntVar(&port, "port", 8500, "consul port")
+
+	var dataDir string
+	flag.StringVar(&dataDir, "dataDir", "./data", "The location of the data store")
+
 	flag.Parse()
 
 	// Get a new client
 	config := api.DefaultConfig()
-	config.Address=fmt.Sprintf("%s:%d",host,port)
-	Info.Print("Config: ",config)
+	config.Address = fmt.Sprintf("%s:%d", host, port)
+	Info.Print("Config: ", config)
 	client, err := api.NewClient(config)
 	if err != nil {
 		Error.Fatal(err)
@@ -59,6 +85,8 @@ func main() {
 
 	// Get a handle to the KV API
 	kv := client.KV()
+
+	processDir(dataDir)
 
 	// PUT a new KV pair
 	p := &api.KVPair{Key: "foo", Value: []byte("test")}
