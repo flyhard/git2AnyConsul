@@ -1,65 +1,14 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"github.com/hashicorp/consul/api"
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
-	"strings"
 	"encoding/json"
 	"github.com/VictorLowther/go-git/git"
+	"github.com/hashicorp/consul/api"
+	"io/ioutil"
+	"os"
+	"strings"
 	"time"
 )
-
-var (
-	Trace   *log.Logger
-	Info    *log.Logger
-	Warning *log.Logger
-	Error   *log.Logger
-)
-
-func InitLogging(
-traceHandle io.Writer,
-infoHandle io.Writer,
-warningHandle io.Writer,
-errorHandle io.Writer) {
-
-	Trace = log.New(traceHandle,
-		"TRACE: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
-
-	Info = log.New(infoHandle,
-		"INFO: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
-
-	Warning = log.New(warningHandle,
-		"WARNING: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
-
-	Error = log.New(errorHandle,
-		"ERROR: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
-}
-
-func storeData(kv *api.KV, key string, value []byte) {
-	pair, _, err := kv.Get(key, nil)
-	if err != nil {
-		Error.Fatal("Failed reading from Consul for key:", key, "Error:", err)
-	}
-	if pair == nil || string(pair.Value) != string(value) {
-		p := &api.KVPair{Key:key, Value:value}
-		_, err = kv.Put(p, nil)
-		if err != nil {
-			Error.Fatal(err)
-		}
-		Info.Print("Updated key ", key, "to", value)
-	} else {
-		Trace.Print("not updating key", key)
-	}
-}
 
 func processJson(path string, m map[string]interface{}, kv *api.KV) {
 	for key, value := range m {
@@ -124,13 +73,13 @@ func processDir(basename string, dirname string, kv *api.KV) {
 			continue
 		}
 		if element.IsDir() {
-			Trace.Print("Processing dir:", name + "/")
+			Trace.Print("Processing dir:", name+"/")
 			processDir(basename, name, kv)
 		} else {
 			Trace.Print("Processing file", name)
 			isJson := loadJson(basename, name, kv)
 			if !isJson {
-				p := &api.KVPair{Key:name, Value:[]byte("TODO")}
+				p := &api.KVPair{Key: name, Value: []byte("TODO")}
 				_, err = kv.Put(p, nil)
 				if err != nil {
 					Error.Fatal(err)
@@ -140,53 +89,19 @@ func processDir(basename string, dirname string, kv *api.KV) {
 	}
 }
 
+func loop(dataDir string, kv *api.KV, repo *git.Repo) {
+	updateRepo(repo)
+	processDir(dataDir, "", kv)
+	time.Sleep(10 * time.Second)
+	loop(dataDir, kv, repo)
+}
+
 func main() {
 	InitLogging(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	host, port, dataDir, repo := parseCli()
 
-	var host string
-	flag.StringVar(&host, "host", "127.0.0.1", "Address of consul server")
+	kv := waitForConsul(host, port)
 
-	var port int
-	flag.IntVar(&port, "port", 8500, "consul port")
-
-	var dataDir string
-	flag.StringVar(&dataDir, "dataDir", "./data", "The location of the data store")
-
-	flag.Parse()
-
-	// Get a new client
-	config := api.DefaultConfig()
-	config.Address = fmt.Sprintf("%s:%d", host, port)
-	Info.Print("Config: ", config)
-	client, err := api.NewClient(config)
-	if err != nil {
-		Error.Fatal(err)
-	}
-
-	status := client.Status()
-	retry := 0
-	var leader string
-	for retry < 5 && leader == ""{
-		leader, err = status.Leader()
-		if err != nil {
-			Error.Fatal("failed to get the Consul leader")
-		}else {
-			Info.Print("Connected to Consul with leader:", leader)
-		}
-		time.Sleep(1 * time.Second)
-		retry ++
-	}
-
-	// Get a handle to the KV API
-	kv := client.KV()
-	r, err := git.Clone("https://github.com/flyhard/testData", dataDir)
-	if err != nil {
-		Error.Fatal(err)
-	}
-	clean, _ := r.IsClean()
-	if clean {
-		Info.Print("Done cloning. repo is clean now.")
-	}
-	processDir(dataDir, "", kv)
-
+	repository := aquireGitRepo(repo, dataDir)
+	loop(dataDir, kv, repository)
 }
