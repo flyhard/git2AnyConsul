@@ -20,6 +20,7 @@ This project is implementing the same basic idea as git2Consul, but does not nee
 * writing a key to Consul if different from current value
 * reading JSON files as part of the tree
 * Polling the Git repo
+* Reading files that are not in JSON format into Consul Values
 
 ## incomplete features
-* Reading files that are not in JSON format into Consul Values
+* CLI parameter for selecting the branch

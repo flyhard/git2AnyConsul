@@ -1,5 +1,7 @@
 consul:
   image: consul
+  ports:
+    - "8500"
 git2consul:
   build: .
 #  volumes:

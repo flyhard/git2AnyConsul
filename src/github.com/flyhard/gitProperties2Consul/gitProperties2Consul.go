@@ -33,15 +33,25 @@ func processJson(path string, m map[string]interface{}, kv *api.KV) {
 	}
 }
 
+func stripExtension(filename string) (result string) {
+	dotIndex := strings.LastIndex(filename, ".")
+	slashIndex := strings.LastIndex(filename, string(os.PathSeparator))
+	if dotIndex > slashIndex {
+		filename = filename[0:dotIndex]
+	}
+	result = filename
+	return
+}
+
 func loadJson(basename string, filename string, kv *api.KV) bool {
-	b, err := ioutil.ReadFile(basename + "/" + filename)
+	b, err := ioutil.ReadFile(basename + string(os.PathSeparator) + filename)
 	if err != nil {
 		Error.Fatal("File reading failed:", err)
 	}
 	var f interface{}
 	err = json.Unmarshal(b, &f)
 	if err != nil {
-		Error.Print("Unmarshallingfailed:", err)
+		Info.Print("Unmarshallingfailed:", err)
 		return false
 	}
 	if f == nil {
@@ -49,40 +59,50 @@ func loadJson(basename string, filename string, kv *api.KV) bool {
 		return false
 	}
 	m := f.(map[string]interface{})
-	dotIndex := strings.LastIndex(filename, ".")
-	slashIndex := strings.LastIndex(filename, "/")
-	if dotIndex > slashIndex {
-		filename = filename[0:dotIndex]
-	}
+
+	filename = stripExtension(filename)
 
 	processJson(filename, m, kv)
 	return true
 }
 
+func loadFile(basename string, name string) (content []byte) {
+	content, err := ioutil.ReadFile(basename + string(os.PathSeparator) + name)
+	if err != nil {
+		Error.Fatal("Failed reading file: ", err)
+	}
+	return
+}
+
 func processDir(basename string, dirname string, kv *api.KV) {
-	files, err := ioutil.ReadDir(basename + "/" + dirname)
+	files, err := ioutil.ReadDir(basename + string(os.PathSeparator) + dirname)
 	if err != nil {
 		Error.Fatal("Directory reading failed:", err)
 	}
 	for _, element := range files {
 		name := element.Name()
 		if dirname != "" {
-			name = dirname + "/" + name
+			name = dirname + string(string(os.PathSeparator)) + name
 		}
 		if strings.HasPrefix(element.Name(), ".") {
+			// Ignore hidden files (beginning with .) from processing
 			continue
 		}
 		if element.IsDir() {
-			Trace.Print("Processing dir:", name+"/")
+			Trace.Print("Processing dir:", name+string(os.PathSeparator))
 			processDir(basename, name, kv)
 		} else {
 			Trace.Print("Processing file", name)
 			isJson := loadJson(basename, name, kv)
 			if !isJson {
-				p := &api.KVPair{Key: name, Value: []byte("TODO")}
+				p := &api.KVPair{
+					Key:   stripExtension(name),
+					Value: loadFile(basename, name)}
 				_, err = kv.Put(p, nil)
 				if err != nil {
 					Error.Fatal(err)
+				} else {
+					Info.Print("Updated key: '", p.Key, "' to value '", p.Value)
 				}
 			}
 		}
