@@ -13,6 +13,8 @@ This project is implementing the same basic idea as git2Consul, but does not nee
             consul port (default 8500)
       -repo string
             The location of the git repo (default "")
+      -branch
+            The branch to use (default "master")
 
 
 ## completed features
@@ -21,6 +23,6 @@ This project is implementing the same basic idea as git2Consul, but does not nee
 * reading JSON files as part of the tree
 * Polling the Git repo
 * Reading files that are not in JSON format into Consul Values
+* CLI parameter for selecting the branch
 
 ## incomplete features
-* CLI parameter for selecting the branch

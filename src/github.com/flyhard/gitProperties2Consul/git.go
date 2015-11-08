@@ -2,10 +2,11 @@ package main
 
 import "github.com/VictorLowther/go-git/git"
 
-func updateRepo(repo *git.Repo) {
+func updateRepo(repo *git.Repo, branch string) {
 	Info.Print("Updating GIT repo")
+	repo.Checkout(branch)
 	repo.Fetch([]string{"origin"})
-	res, err := repo.Ref("remotes/origin/master")
+	res, err := repo.Ref("remotes/origin/" + branch)
 	if err != nil {
 		Error.Fatal("Failed to get ref to origin/master: ", err)
 	}

@@ -51,7 +51,7 @@ func loadJson(basename string, filename string, kv *api.KV) bool {
 	var f interface{}
 	err = json.Unmarshal(b, &f)
 	if err != nil {
-		Info.Print("Unmarshallingfailed:", err)
+		Trace.Print("Not a valid JSON file", err)
 		return false
 	}
 	if f == nil {
@@ -95,33 +95,25 @@ func processDir(basename string, dirname string, kv *api.KV) {
 			Trace.Print("Processing file", name)
 			isJson := loadJson(basename, name, kv)
 			if !isJson {
-				p := &api.KVPair{
-					Key:   stripExtension(name),
-					Value: loadFile(basename, name)}
-				_, err = kv.Put(p, nil)
-				if err != nil {
-					Error.Fatal(err)
-				} else {
-					Info.Print("Updated key: '", p.Key, "' to value '", p.Value)
-				}
+				storeData(kv, stripExtension(name), loadFile(basename, name))
 			}
 		}
 	}
 }
 
-func loop(dataDir string, kv *api.KV, repo *git.Repo) {
-	updateRepo(repo)
+func loop(dataDir string, kv *api.KV, repo *git.Repo, branch string) {
+	updateRepo(repo, branch)
 	processDir(dataDir, "", kv)
 	time.Sleep(10 * time.Second)
-	loop(dataDir, kv, repo)
+	loop(dataDir, kv, repo, branch)
 }
 
 func main() {
 	InitLogging(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-	host, port, dataDir, repo := parseCli()
+	host, port, dataDir, repo, branch := parseCli()
 
 	kv := waitForConsul(host, port)
 
 	repository := aquireGitRepo(repo, dataDir)
-	loop(dataDir, kv, repository)
+	loop(dataDir, kv, repository, branch)
 }
