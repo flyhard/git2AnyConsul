@@ -26,3 +26,4 @@ This project is implementing the same basic idea as git2Consul, but does not nee
 * CLI parameter for selecting the branch
 
 ## incomplete features
+* Configurable poll interval
