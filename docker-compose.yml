@@ -1,0 +1,8 @@
+consul:
+  image: consul
+git2consul:
+  build: .
+#  volumes:
+#    - ./testData:/data
+  links:
+    - consul:consul
