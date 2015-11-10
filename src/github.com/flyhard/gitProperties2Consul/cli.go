@@ -2,16 +2,27 @@ package main
 
 import "flag"
 
-func parseCli() (host string, port int, dataDir string, repo string, branch string) {
-	flag.StringVar(&host, "host", "127.0.0.1", "Address of consul server")
+type CliParameters struct {
+	host     string
+	port     int
+	dataDir  string
+	repo     string
+	branch   string
+	interval int
+}
 
-	flag.IntVar(&port, "port", 8500, "consul port")
+func parseCli() (parameters CliParameters) {
+	flag.StringVar(&parameters.host, "host", "127.0.0.1", "Address of consul server")
 
-	flag.StringVar(&dataDir, "dataDir", "./data", "The location of the data store")
+	flag.IntVar(&parameters.port, "port", 8500, "consul port")
 
-	flag.StringVar(&repo, "repo", "", "The location of the git repo")
+	flag.IntVar(&parameters.interval, "interval", 10, "The interval between polls of the repo")
 
-	flag.StringVar(&branch, "branch", "master", "The branch to use")
+	flag.StringVar(&parameters.dataDir, "dataDir", "./data", "The location of the data store")
+
+	flag.StringVar(&parameters.repo, "repo", "", "The location of the git repo")
+
+	flag.StringVar(&parameters.branch, "branch", "master", "The branch to use")
 
 	flag.Parse()
 	return

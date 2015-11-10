@@ -20,6 +20,7 @@ func waitForConsul(host string, port int) (kv *api.KV) {
 	status := client.Status()
 	retry := 0
 	var leader string
+	leader = ""
 	for retry < 5 && leader == "" {
 		leader, err := status.Leader()
 		if err != nil {

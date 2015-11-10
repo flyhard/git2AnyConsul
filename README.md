@@ -15,6 +15,8 @@ This project is implementing the same basic idea as git2Consul, but does not nee
             The location of the git repo (default "")
       -branch
             The branch to use (default "master")
+      -interval
+            The interval between polls of the repo (default 10)
 
 
 ## completed features
@@ -24,6 +26,6 @@ This project is implementing the same basic idea as git2Consul, but does not nee
 * Polling the Git repo
 * Reading files that are not in JSON format into Consul Values
 * CLI parameter for selecting the branch
+* Configurable poll interval
 
 ## incomplete features
-* Configurable poll interval

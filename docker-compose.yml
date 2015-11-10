@@ -1,5 +1,5 @@
 consul:
-  image: consul
+  image: flyhard/consul:latest
   ports:
     - "8500"
 git2consul:

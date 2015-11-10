@@ -101,19 +101,19 @@ func processDir(basename string, dirname string, kv *api.KV) {
 	}
 }
 
-func loop(dataDir string, kv *api.KV, repo *git.Repo, branch string) {
-	updateRepo(repo, branch)
-	processDir(dataDir, "", kv)
-	time.Sleep(10 * time.Second)
-	loop(dataDir, kv, repo, branch)
+func loop(params CliParameters, kv *api.KV, repo *git.Repo) {
+	updateRepo(repo, params.branch)
+	processDir(params.dataDir, "", kv)
+	time.Sleep(time.Duration(params.interval) * time.Second)
+	loop(params, kv, repo)
 }
 
 func main() {
 	InitLogging(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-	host, port, dataDir, repo, branch := parseCli()
+	params := parseCli()
 
-	kv := waitForConsul(host, port)
+	kv := waitForConsul(params.host, params.port)
 
-	repository := aquireGitRepo(repo, dataDir)
-	loop(dataDir, kv, repository, branch)
+	repository := aquireGitRepo(params.repo, params.dataDir)
+	loop(params, kv, repository)
 }
